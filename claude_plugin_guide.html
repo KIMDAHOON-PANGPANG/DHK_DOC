@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude 플러그인 완전 가이드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: rgba(255,255,255,0.07);
+    --text: #f0ede8;
+    --muted: #888;
+    --accent: #d4a853;
+    --accent2: #7eb8a4;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'Noto Sans KR', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-weight: 300; line-height: 1.7; min-height: 100vh; overflow-x: hidden; }
+  .hero { position: relative; padding: 100px 5vw 80px; border-bottom: 1px solid var(--border); }
+  .hero-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+  .hero-eyebrow::before { content: ''; display: block; width: 32px; height: 1px; background: var(--accent); }
+  .hero-title { font-family: var(--font-display); font-size: clamp(64px, 10vw, 120px); line-height: 0.92; color: var(--text); margin-bottom: 32px; }
+  .hero-title span { color: var(--accent); }
+  .hero-desc { max-width: 520px; font-size: 15px; color: var(--muted); line-height: 1.8; margin-bottom: 48px; }
+  .hero-stats { display: flex; gap: 40px; flex-wrap: wrap; }
+  .stat { display: flex; flex-direction: column; gap: 4px; }
+  .stat-num { font-family: var(--font-display); font-size: 40px; color: var(--text); line-height: 1; }
+  .stat-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; }
+  .install-section { padding: 60px 5vw; border-bottom: 1px solid var(--border); }
+  .section-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.2em; color: var(--accent2); text-transform: uppercase; margin-bottom: 32px; display: flex; align-items: center; gap: 12px; }
+  .section-label::before { content: ''; display: block; width: 24px; height: 1px; background: var(--accent2); }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .step { background: var(--surface); padding: 28px 24px; position: relative; }
+  .step-num { font-family: var(--font-display); font-size: 56px; color: rgba(255,255,255,0.06); line-height: 1; position: absolute; top: 16px; right: 20px; }
+  .step-icon { font-size: 22px; margin-bottom: 14px; }
+  .step-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+  .step-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .step-desc code { font-family: var(--font-mono); font-size: 11px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; color: var(--accent); }
+  .filter-bar { padding: 32px 5vw 0; display: flex; gap: 8px; flex-wrap: wrap; }
+  .filter-btn { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; padding: 7px 16px; border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; text-transform: uppercase; }
+  .filter-btn:hover, .filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(212,168,83,0.06); }
+  .plugins-section { padding: 32px 5vw 80px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .card { background: var(--surface); padding: 28px 24px; transition: background 0.2s; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 14px; }
+  .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--card-accent, transparent); transition: opacity 0.2s; opacity: 0; }
+  .card:hover { background: var(--surface2); }
+  .card:hover::before { opacity: 1; }
+  .card-header { display: flex; align-items: flex-start; gap: 14px; }
+  .card-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; background: var(--icon-bg, rgba(255,255,255,0.05)); }
+  .card-title { font-size: 15px; font-weight: 500; color: var(--text); line-height: 1.3; }
+  .card-en { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 0.05em; margin-top: 2px; }
+  .card-desc { font-size: 13px; color: var(--muted); line-height: 1.7; flex: 1; }
+  .card-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag { font-family: var(--font-mono); font-size: 10px; padding: 3px 9px; border-radius: 3px; border: 1px solid var(--border); color: rgba(255,255,255,0.35); letter-spacing: 0.05em; }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--border); }
+  .installs { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+  .installs strong { color: var(--text); font-weight: 500; }
+  .maker-badge { font-family: var(--font-mono); font-size: 10px; padding: 3px 10px; border-radius: 3px; letter-spacing: 0.05em; }
+  .maker-anthropic { background: rgba(126,184,164,0.12); color: var(--accent2); border: 1px solid rgba(126,184,164,0.2); }
+  .maker-third { background: rgba(212,168,83,0.1); color: var(--accent); border: 1px solid rgba(212,168,83,0.2); }
+  .rec-section { padding: 0 5vw 80px; }
+  .rec-table { width: 100%; border-collapse: collapse; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .rec-table th { background: var(--surface2); padding: 14px 20px; text-align: left; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; font-weight: 400; border-bottom: 1px solid var(--border); }
+  .rec-table td { padding: 14px 20px; font-size: 13px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .rec-table tr:last-child td { border-bottom: none; }
+  .rec-table tr:hover td { background: var(--surface2); }
+  .plugin-name { font-weight: 500; color: var(--accent); font-family: var(--font-mono); font-size: 12px; }
+  footer { padding: 40px 5vw; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+  footer p { font-family: var(--font-mono); font-size: 11px; color: rgba(255,255,255,0.2); }
+  footer a { color: var(--accent); text-decoration: none; }
+  .hidden { display: none !important; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .card { animation: fadeUp 0.4s ease both; }
+</style>
+</head>
+<body>
+<section class="hero">
+  <div class="hero-eyebrow">Claude.ai — Integration Guide</div>
+  <h1 class="hero-title">CLAUDE<br><span>플러그인</span><br>가이드</h1>
+  <p class="hero-desc">Claude에 연결할 수 있는 17가지 플러그인을 한국어로 정리했습니다. 설치하면 Claude가 해당 분야의 전문 도구로 변신해요.</p>
+  <div class="hero-stats">
+    <div class="stat"><span class="stat-num">17</span><span class="stat-label">총 플러그인</span></div>
+    <div class="stat"><span class="stat-num">14</span><span class="stat-label">Anthropic 공식</span></div>
+    <div class="stat"><span class="stat-num">3</span><span class="stat-label">서드파티</span></div>
+    <div class="stat"><span class="stat-num">38K+</span><span class="stat-label">총 설치 수</span></div>
+  </div>
+</section>
+<section class="install-section">
+  <div class="section-label">설치 방법</div>
+  <div class="steps">
+    <div class="step"><span class="step-num">01</span><div class="step-icon">🌐</div><div class="step-title">claude.ai 접속</div><div class="step-desc">브라우저에서 <code>claude.ai</code>에 접속하고 로그인합니다.</div></div>
+    <div class="step"><span class="step-num">02</span><div class="step-icon">🔌</div><div class="step-title">통합 메뉴 클릭</div><div class="step-desc">왼쪽 사이드바 하단의 <code>통합(Integrations)</code> 메뉴를 클릭합니다.</div></div>
+    <div class="step"><span class="step-num">03</span><div class="step-icon">⚡</div><div class="step-title">설치 버튼 클릭</div><div class="step-desc">원하는 플러그인 옆 <code>설치(Install)</code> 버튼을 클릭합니다.</div></div>
+    <div class="step"><span class="step-num">04</span><div class="step-icon">✅</div><div class="step-title">즉시 활용</div><div class="step-desc">설치 완료 후 대화창에서 바로 해당 기능을 활용할 수 있습니다.</div></div>
+  </div>
+</section>
+<div class="filter-bar">
+  <button class="filter-btn active" data-filter="all">전체 보기</button>
+  <button class="filter-btn" data-filter="anthropic">Anthropic 공식</button>
+  <button class="filter-btn" data-filter="third">서드파티</button>
+  <button class="filter-btn" data-filter="popular">인기순 (3K+)</button>
+</div>
+<section class="plugins-section">
+  <div class="grid" id="grid">
+    <div class="card" data-maker="anthropic" data-installs="5500" style="--card-accent:#7eb8a4;--icon-bg:rgba(126,184,164,0.12)"><div class="card-header"><div class="card-icon">✅</div><div><div class="card-title">생산성</div><div class="card-en">PRODUCTIVITY</div></div></div><div class="card-desc">할 일 관리, 하루 일정 계획, 업무 기억 저장. 캘린더·이메일·채팅과 연동해서 모든 걸 한 곳에서 정리해줘요.</div><div class="card-tags"><span class="tag">일정 관리</span><span class="tag">할 일 목록</span><span class="tag">캘린더 연동</span></div><div class="card-footer"><span class="installs"><strong>5.5K</strong> 설치</span><span class="maker-badge maker-anthropic">Anthropic</span></div></div>
+    <div class="card" data-maker="anthropic" data-installs="6500" style="--card-accent:#c97b7b;--icon-bg:rgba(201,123,123,0.12)"><div class="card-header"><div class="card-icon">🎨</div><div><div class="card-title">디자인</div><div class="card-en">DESIGN</div></div></div><div class="card-desc">디자인 피드백, 디자인 시스템 관리, UX 문구 작성, 접근성 감사, 개발 인계 문서까지 지원합니다.</div><div class="card-tags"><span class="tag">UI/UX 리뷰</span><span class="tag">접근성 검사</span><span class="tag">디자인 시스템</span></div><div class="card-footer"><span class="installs"><strong>6.5K</strong> 설치</span><span class="maker-badge maker-anthropic">Anthropic</span></div></div>
+    <div class="card" data-maker="anthropic" data-installs="4800" style="--card-accent:#d4a853;--icon-bg:rgba(212,168,83,0.12)"><div class="card-header"><div class="card-icon">📣</div><div><div class="card-title">마케팅</div><div class="card-en">MARKETING</div></div></div><div class="card-desc">콘텐츠 제작, 캠페인 기획, 성과 분석. 브랜드 톤 일관성 유지, 경쟁사 모니터링, 성과 리포트 작성.</div><div class="card-tags"><span class="tag">콘텐츠 제작</span><span class="tag">캠페인 기획</span><span class="tag">경쟁사 분석</span></div><div class="card-footer"><span class="installs"><strong>4.8K</strong> 설치</span><span class="maker-badge maker-anthropic">Anthropic</span></div></div>
+    <div class="card" data-maker="anthropic" data-installs="4400" style="--card-accent:#6b9fd4;--icon-bg:rgba(107,159,212,0.12)"><div class="card-header"><div class="card-icon">📊</div><div><div class="card-title">데이터</div><div class="card-en">DATA</div></div></div><div class="card-desc">SQL 작성, 데이터셋 탐색, 인사이트 도출을 빠르게 처리. 시각화·대시보드 구축, 원시 데이터를 스토리로 전환.</div><div class="card-tags"><span class="tag">SQL 작성</span><span class="tag">데이터 분석</span><span class="tag">대시보드</span></div><div class="card-footer"><span class="installs"><strong>4.4K</strong> 설치</span><span class="maker-badge maker-anthropic">Anthropic</span></div></div>
+    <div class="card" data-maker="anthropic" data-installs="4200" style="--card-accent:#7eb8a4;--icon-bg:rgba(126,184,164,0.12)"><div class="card-header"><div class="card-icon">⚙️</div><div><div class="card-title">운영</div><div class="card-en">OPERATIONS</div></div></div><div class="card-desc">벤더 관리, 프로세스 문서화, 변화 관리, 용량 계획, 컴플라이언스 추적까지 비즈니스 운영 전반을 최적화합니다.</div><div class="card-tags"><span class="tag">프로세스 문서</span><span class="tag">벤더 관리</span><span class="tag">컴플라이언스</span></div><div class="card-footer"><span class="installs"><strong>4.2K</strong> 설치</span><span class="maker-badge maker-anthropic">Anthropic</span></div></div>
+    <div class="card" data-maker="anthropic" data-installs="5000" style="--card-accent:#6b9fd4;--icon-bg:rgba(107,159,212,0.12)"><div class="card-header"><div class="card-icon">💻</div><div><div class="card-title">엔지니어링</div><div class="card-en">ENGINEERING</div></div></div><div class="card-desc">스탠드업 정리, 코드 리뷰, 아키텍처 결정, 인시던트 대응, 기술 문서 작성. 기존 도구와 연동 가능.</div><div class="card-tags"><span class="tag">코드 리뷰</span><span class="tag">기술 문서</span><span class="tag">인시던트 대응</span></div><div class="card-footer"><span class="installs"><strong>5K</strong> 설치</span><span class="maker-badge maker-anthropic">Anthropic</span></div></div>
+    <div class="card" data-maker="anthropic" data-installs="3800" style="--card-accent:#7eb8a4;--icon-bg:rgba(126,184,164,0.12)"><div class="card-header"><div class="card-icon">💰</div><div><div class="card-title">재무</div><div class="card-en">FINANCE</div></div></div><div class="card-desc">분개, 조정, 재무제표, 차이 분석 등 재무·회계 업무 전반을 간소화합니다. 감사 준비, 월말 결산, 장부 정리.</div><div class="card-tags"><span class="tag">재무제표</span><span class="tag">조정</span><span class="tag">감사 준비</span></div><div class="card-footer"><span class="installs"><strong>3.8K</strong> 설치</span><span class="maker-badge maker-anthropic">Anthropic</span></div></div>
+    <div class="card" data-maker="anthropic" data-installs="3800" style="--card-accent:#d4a853;--icon-bg:rgba(212,168,83,0.12)"><div class="card-header"><div class="card-icon">🗣️</div><div><div class="card-title">브랜드 보이스</div><div class="card-en">BRAND VOICE · Tribe AI</div></div></div><div class="card-desc">기존 문서·대화에서 브랜드 보이스를 발견하고 가이드라인을 생성합니다. AI 콘텐츠가 브랜드 톤에 맞는지 검증.</div><div class="card-tags"><span class="tag">브랜드 가이드</span><span class="tag">톤 분석</span><span class="tag">콘텐츠 검증</span></div><div class="card-footer"><span class="installs"><strong>3.8K</strong> 설치</span><span class="maker-badge maker-third">Tribe AI</span></div></div>
+    <div class="card" data-maker="anthropic" data-installs="3200" style="--card-accent:#d4a853;--icon-bg:rgba(212,168,83,0.12)"><div class="card-header"><div class="card-icon">💼</div><div><div class="card-title">영업</div><div class="card-en">SALES</div></div></div><div class="card-desc">잠재 고객 발굴, 아웃리치 문구 작성, 딜 전략 수립. 미팅 준비, 파이프라인 관리, 개인화된 메시지 작성.</div><div class="card-tags"><span class="tag">리드 발굴</span><span class="tag">아웃리치</span><span class="tag">파이프라인</span></div><div class="card-footer"><span class="installs"><strong>3.2K</strong> 설치</span><span class="maker-badge maker-anthropic">Anthropic</span></div></div>
+    <div class="card" data-maker="anthropic" data-installs="3600" style="--card-accent:#a07bc9;--icon-bg:rgba(160,123,201,0.12)"><div class="card-header"><div class="card-icon">⚖️</div><div><div class="card-title">법무</div><div class="card-en">LEGAL</div></div></div><div class="card-desc">계약 검토, NDA 분류, 컴플라이언스 워크플로를 가속합니다. 법적 브리프 초안, 판례 조사 정리, 지식 관리.</div><div class="card-tags"><span class="tag">계약 검토</span><span class="tag">NDA</span><span class="tag">컴플라이언스</span></div><div class="card-footer"><span class="installs"><strong>3.6K</strong> 설치</span><span class="maker-badge maker-anthropic">Anthropic</span></div></div>
+    <div class="card" data-maker="anthropic" data-installs="3600" style="--card-accent:#c97b7b;--icon-bg:rgba(201,123,123,0.12)"><div class="card-header"><div class="card-icon">🗺️</div><div><div class="card-title">프로덕트 매니지먼트</div><div class="card-en">PRODUCT MANAGEMENT</div></div></div><div class="card-desc">기능 스펙 작성, 로드맵 기획, 사용자 리서치 종합. 이해관계자 업데이트 유지, 경쟁 현황 파악.</div><div class="card-tags"><span class="tag">기능 스펙</span><span class="tag">로드맵</span><span class="tag">경쟁 분석</span></div><div class="card-footer"><span class="installs"><strong>3.6K</strong> 설치</span><span class="maker-badge maker-anthropic">Anthropic</span></div></div>
+    <div class="card" data-maker="anthropic" data-installs="2600" style="--card-accent:#6b9fd4;--icon-bg:rgba(107,159,212,0.12)"><div class="card-header"><div class="card-icon">🔍</div><div><div class="card-title">기업 검색</div><div class="card-en">ENTERPRISE SEARCH</div></div></div><div class="card-desc">이메일·채팅·문서·위키를 한 번에 검색. 앱 전환 없이 회사 내 모든 도구에서 무엇이든 찾아낼 수 있어요.</div><div class="card-tags"><span class="tag">통합 검색</span><span class="tag">문서 찾기</span><span class="tag">위키</span></div><div class="card-footer"><span class="installs"><strong>2.6K</strong> 설치</span><span class="maker-badge maker-anthropic">Anthropic</span></div></div>
+    <div class="card" data-maker="anthropic" data-installs="2500" style="--card-accent:#7eb8a4;--icon-bg:rgba(126,184,164,0.12)"><div class="card-header"><div class="card-icon">👥</div><div><div class="card-title">인사 (HR)</div><div class="card-en">HUMAN RESOURCES</div></div></div><div class="card-desc">채용, 온보딩, 성과 리뷰, 보상 분석, 정책 안내 등 인사 운영을 간소화합니다. 팀이 원활하게 운영되도록 지원.</div><div class="card-tags"><span class="tag">채용</span><span class="tag">온보딩</span><span class="tag">성과 리뷰</span></div><div class="card-footer"><span class="installs"><strong>2.5K</strong> 설치</span><span class="maker-badge maker-anthropic">Anthropic</span></div></div>
+    <div class="card" data-maker="anthropic" data-installs="1800" style="--card-accent:#d4a853;--icon-bg:rgba(212,168,83,0.12)"><div class="card-header"><div class="card-icon">🎧</div><div><div class="card-title">고객 지원</div><div class="card-en">CUSTOMER SUPPORT</div></div></div><div class="card-desc">티켓 분류, 응답 초안, 이슈 에스컬레이션, 지식 베이스 구축. 해결된 이슈를 셀프서비스 콘텐츠로 전환합니다.</div><div class="card-tags"><span class="tag">티켓 처리</span><span class="tag">응답 작성</span><span class="tag">지식베이스</span></div><div class="card-footer"><span class="installs"><strong>1.8K</strong> 설치</span><span class="maker-badge maker-anthropic">Anthropic</span></div></div>
+    <div class="card" data-maker="third" data-installs="1500" style="--card-accent:#7eb8a4;--icon-bg:rgba(126,184,164,0.12)"><div class="card-header"><div class="card-icon">🤝</div><div><div class="card-title">Common Room</div><div class="card-en">GTM COPILOT · Common Room</div></div></div><div class="card-desc">GTM 코파일럿으로 계정·연락처 조사, 미팅 전 참석자 프로필 및 토킹 포인트 준비, 맞춤형 아웃리치 초안 작성.</div><div class="card-tags"><span class="tag">계정 조사</span><span class="tag">GTM</span><span class="tag">아웃리치</span></div><div class="card-footer"><span class="installs"><strong>1.5K</strong> 설치</span><span class="maker-badge maker-third">Common Room</span></div></div>
+    <div class="card" data-maker="third" data-installs="1400" style="--card-accent:#6b9fd4;--icon-bg:rgba(107,159,212,0.12)"><div class="card-header"><div class="card-icon">💬</div><div><div class="card-title">Slack by Salesforce</div><div class="card-en">MESSAGING · Salesforce</div></div></div><div class="card-desc">Slack 메시지 검색, 커뮤니케이션 전송, 캔버스 관리 등 다양한 Slack 작업을 Claude에서 바로 처리할 수 있어요.</div><div class="card-tags"><span class="tag">메시지 검색</span><span class="tag">알림 전송</span><span class="tag">Slack 연동</span></div><div class="card-footer"><span class="installs"><strong>1.4K</strong> 설치</span><span class="maker-badge maker-third">Salesforce</span></div></div>
+    <div class="card" data-maker="third" data-installs="1300" style="--card-accent:#c97b7b;--icon-bg:rgba(201,123,123,0.12)"><div class="card-header"><div class="card-icon">🚀</div><div><div class="card-title">Apollo</div><div class="card-en">SALES INTELLIGENCE · Apollo.io</div></div></div><div class="card-desc">잠재 고객 발굴, 리드 강화, 아웃리치 시퀀스 로딩. Apollo.io와 Claude Code·Cowork 간 원클릭 MCP 서버 통합.</div><div class="card-tags"><span class="tag">리드 발굴</span><span class="tag">데이터 강화</span><span class="tag">영업 자동화</span></div><div class="card-footer"><span class="installs"><strong>1.3K</strong> 설치</span><span class="maker-badge maker-third">Apollo.io</span></div></div>
+  </div>
+</section>
+<section class="rec-section">
+  <div class="section-label">나에게 맞는 플러그인은?</div>
+  <table class="rec-table">
+    <thead><tr><th>내 상황</th><th>추천 플러그인</th><th>이유</th></tr></thead>
+    <tbody>
+      <tr><td style="color:var(--muted)">매일 할 일·일정 관리가 필요해</td><td class="plugin-name">PRODUCTIVITY</td><td style="color:var(--muted);font-size:13px">캘린더·이메일·채팅 통합, 컨텍스트 기억</td></tr>
+      <tr><td style="color:var(--muted)">개발자야, 코드 리뷰·문서가 많아</td><td class="plugin-name">ENGINEERING</td><td style="color:var(--muted);font-size:13px">스탠드업·코드 리뷰·인시던트 대응 자동화</td></tr>
+      <tr><td style="color:var(--muted)">마케터야, 콘텐츠가 브랜드 톤에 맞아야 해</td><td class="plugin-name">MARKETING + BRAND VOICE</td><td style="color:var(--muted);font-size:13px">콘텐츠 제작 + 브랜드 가이드라인 검증</td></tr>
+      <tr><td style="color:var(--muted)">데이터 분석이 많아, SQL 매번 짜기 힘들어</td><td class="plugin-name">DATA</td><td style="color:var(--muted);font-size:13px">SQL 자동 생성, 시각화·대시보드 구축</td></tr>
+      <tr><td style="color:var(--muted)">영업팀이야, 리드 발굴·아웃리치 자동화</td><td class="plugin-name">SALES + APOLLO</td><td style="color:var(--muted);font-size:13px">리드 발굴 + Apollo 데이터 강화 통합</td></tr>
+      <tr><td style="color:var(--muted)">회사 내 정보 찾는 데 시간을 너무 써</td><td class="plugin-name">ENTERPRISE SEARCH</td><td style="color:var(--muted);font-size:13px">이메일·채팅·문서·위키 통합 검색</td></tr>
+    </tbody>
+  </table>
+</section>
+<footer>
+  <p>CLAUDE PLUGIN GUIDE — 2025 · <a href="https://claude.ai">claude.ai</a></p>
+  <p>총 17개 플러그인 · 38K+ 설치 · DHK_DOC</p>
+</footer>
+<script>
+  const buttons = document.querySelectorAll('.filter-btn');
+  const cards = document.querySelectorAll('.card');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const f = btn.dataset.filter;
+      cards.forEach(card => {
+        const maker = card.dataset.maker;
+        const installs = parseInt(card.dataset.installs);
+        if (f === 'all') card.classList.remove('hidden');
+        else if (f === 'anthropic') card.classList.toggle('hidden', maker !== 'anthropic');
+        else if (f === 'third') card.classList.toggle('hidden', maker !== 'third');
+        else if (f === 'popular') card.classList.toggle('hidden', installs < 3000);
+      });
+    });
+  });
+</script>
+</body>
+</html>
